@@ -13,7 +13,6 @@ interface Message {
 }
 
 export function Chatbot() {
-  const [apiKey] = useState('AIzaSyBXW-soE2R-XB2JfBuWXA01ojYL4vkd52c');
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -23,7 +22,7 @@ export function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
