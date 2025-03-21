@@ -8,8 +8,8 @@ function App() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Replace this URL with your deployed API URL
-  const API_URL = 'https://your-api-domain.onrender.com/predict';
+  // Replace with your actual Render URL
+  const API_URL = 'https://autism-prediction-api.onrender.com/predict';
 
   const handlePredict = async () => {
     try {
