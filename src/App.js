@@ -8,6 +8,9 @@ function App() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Replace this URL with your deployed API URL
+  const API_URL = 'https://your-api-domain.onrender.com/predict';
+
   const handlePredict = async () => {
     try {
       setLoading(true);
@@ -27,7 +30,7 @@ function App() {
       const requestBody = { features: values };
       console.log('Sending request:', requestBody);
 
-      const response = await fetch('http://127.0.0.1:8000/predict', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
