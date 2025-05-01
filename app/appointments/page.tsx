@@ -35,26 +35,47 @@ export default function AppointmentsPage() {
   ];
 
   const [loading, setLoading] = useState(false);
+  const [appointments, setAppointments] = useState<{ [key: number]: { date: string; time: string } }>({});
+
+  const handleDateChange = (id: number, date: string) => {
+    setAppointments((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], date },
+    }));
+  };
+
+  const handleTimeChange = (id: number, time: string) => {
+    setAppointments((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], time },
+    }));
+  };
 
   const bookAppointment = async (specialist: { id: number; name: string; specialty: string; availableSlot: string }) => {
+    const appointmentDetails = appointments[specialist.id];
+    if (!appointmentDetails?.date || !appointmentDetails?.time) {
+      alert("Please select a date and time for the appointment.");
+      return;
+    }
+
     setLoading(true);
     try {
-      console.log("Booking appointment for:", specialist);
-
       const appointment = {
         doctorName: specialist.name,
         specialty: specialist.specialty,
-        slot: specialist.availableSlot,
+        slot: `${appointmentDetails.date} at ${appointmentDetails.time}`,
         bookedAt: new Date().toISOString(),
       };
-
-      console.log("Appointment data:", appointment);
 
       // Add appointment to Firestore
       const docRef = await addDoc(collection(db, "appointments"), appointment);
       console.log("Appointment booked successfully with ID:", docRef.id);
 
       alert(`Appointment with ${specialist.name} booked successfully!`);
+      setAppointments((prev) => ({
+        ...prev,
+        [specialist.id]: { date: "", time: "" },
+      }));
     } catch (error) {
       console.error("Error booking appointment:", error);
       alert("Failed to book appointment. Please try again.");
@@ -78,6 +99,24 @@ export default function AppointmentsPage() {
             </CardHeader>
             <CardContent>
               <p>Next available: {specialist.availableSlot}</p>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700">Select Date</label>
+                <input
+                  type="date"
+                  value={appointments[specialist.id]?.date || ""}
+                  onChange={(e) => handleDateChange(specialist.id, e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700">Select Time</label>
+                <input
+                  type="time"
+                  value={appointments[specialist.id]?.time || ""}
+                  onChange={(e) => handleTimeChange(specialist.id, e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
             </CardContent>
             <CardFooter>
               <Button
@@ -94,4 +133,3 @@ export default function AppointmentsPage() {
     </div>
   );
 }
-
