@@ -11,6 +11,8 @@ export function PredictionForm() {
   const [formData, setFormData] = useState<number[]>(new Array(31).fill(0));
   const [result, setResult] = useState<{ prediction: string; autism_probability: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoResult, setVideoResult] = useState<{ prediction: string } | null>(null);
 
   const handleCheckboxChange = (index: number, checked: boolean) => {
     const newFormData = [...formData];
@@ -64,6 +66,34 @@ export function PredictionForm() {
     }
   };
 
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setVideoUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('http://127.0.0.1:8000/predict/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setVideoResult(data);
+    } catch (error) {
+      console.error('Video upload error:', error);
+      alert('Failed to process video. Please try again.');
+    } finally {
+      setVideoUploading(false);
+    }
+  };
+
   const questions = [
     "Limited or Inconsistent Eye Contact",
     "Poor Response to Name",
@@ -100,23 +130,6 @@ export function PredictionForm() {
 
   return (
     <div className="space-y-8">
-      {/* Show API prediction result first */}
-      {result && (
-        <Card className="mb-6 bg-muted">
-          <CardContent className="pt-6">
-            <h3 className="text-xl font-bold mb-4">Assessment Result</h3>
-            <div className="space-y-2">
-              <p className="text-lg">
-                Prediction: <span className="font-bold text-primary">{result.prediction}</span>
-              </p>
-              <p className="text-lg">
-                Probability: <span className="font-bold text-primary">{result.autism_probability}</span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Behavioral Assessment Form */}
       <form onSubmit={handleSubmit}>
         <Card>
@@ -144,6 +157,21 @@ export function PredictionForm() {
             >
               {isLoading ? 'Getting Prediction...' : 'Submit Assessment'}
             </Button>
+
+            {/* Show API prediction result below submit button */}
+            {result && (
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <h3 className="text-xl font-bold mb-4">Assessment Result</h3>
+                <div className="space-y-2">
+                  <p className="text-lg">
+                    Prediction: <span className="font-bold text-primary">{result.prediction}</span>
+                  </p>
+                  <p className="text-lg">
+                    Probability: <span className="font-bold text-primary">{result.autism_probability}</span>
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </form>
@@ -155,7 +183,25 @@ export function PredictionForm() {
           <p className="text-muted-foreground">Upload a video of the child's behavior for AI analysis</p>
         </CardHeader>
         <CardContent>
-          <Input type="file" accept="video/*" />
+          <div className="space-y-4">
+            <Input 
+              type="file" 
+              accept="video/*" 
+              onChange={handleVideoUpload}
+              disabled={videoUploading}
+            />
+            {videoUploading && (
+              <div className="text-center text-primary">
+                Processing video... Please wait...
+              </div>
+            )}
+            {videoResult && (
+              <div className="mt-4 p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold mb-2">Video Analysis Result</h4>
+                <p>Prediction: <span className="font-bold text-primary">{videoResult.prediction}</span></p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

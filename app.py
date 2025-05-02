@@ -1,13 +1,13 @@
-import os
-import joblib
-import numpy as np
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import cv2
+import numpy as np
+import joblib
 import pandas as pd
 from collections import Counter
 import shutil
+import os
+from pydantic import BaseModel
 from typing import List
 import logging
 
@@ -15,67 +15,17 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
+# Create a FastAPI instance
 app = FastAPI()
 
-# Update CORS settings
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for now
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Define paths
-current_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(current_dir, "qs_pred", "random_forest_model.pkl")
-scaler_path = os.path.join(current_dir, "qs_pred", "scaler.pkl")
-
-# Load model and scaler
-try:
-    model = joblib.load(model_path)
-    scaler = joblib.load(scaler_path)
-except Exception as e:
-    print(f"Error loading model: {str(e)}")
-    raise
-
-# ✅ Define input format
-class AutismInput(BaseModel):
-    features: list
-
-# ✅ Prediction endpoint
-@app.post("/predict")
-async def predict_autism(data: AutismInput):
-    try:
-        # Validate input length
-        if len(data.features) != 31:
-            raise HTTPException(
-                status_code=400, 
-                detail="Input must contain exactly 31 features"
-            )
-
-        # Convert input to numpy array
-        input_data = np.array(data.features).reshape(1, -1)
-        
-        # Scale input
-        input_scaled = scaler.transform(input_data)
-        
-        # Make prediction
-        prediction = model.predict(input_scaled)[0]
-        probability = model.predict_proba(input_scaled)[0][1] * 100
-        
-        return {
-            "prediction": "Autistic" if prediction == 1 else "Not Autistic",
-            "autism_probability": f"{probability:.2f}%"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-# Add a root endpoint for testing
-@app.get("/")
-async def root():
-    return {"message": "Autism Prediction API is running"}
 
 # Initialize model variables
 video_model = None
@@ -105,6 +55,30 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 class QuestionnaireData(BaseModel):
     features: List[int]
+
+@app.post("/predict")
+async def predict_questionnaire(data: QuestionnaireData):
+    if qs_model is None:
+        raise HTTPException(status_code=500, detail="Questionnaire model not loaded")
+    
+    try:
+        # Convert features to numpy array
+        features = np.array(data.features).reshape(1, -1)
+        
+        # Make prediction
+        prediction = qs_model.predict(features)
+        probability = qs_model.predict_proba(features)
+        
+        # Get the probability of autism
+        autism_prob = probability[0][1]
+        
+        return {
+            "prediction": "Autistic" if prediction[0] == 1 else "Non-Autistic",
+            "autism_probability": f"{autism_prob:.2%}"
+        }
+    except Exception as e:
+        logger.error(f"Error in questionnaire prediction: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/predict/")
 async def predict_video(file: UploadFile = File(...)):
@@ -191,3 +165,12 @@ async def predict_video(file: UploadFile = File(...)):
         if os.path.exists(file_path):
             os.remove(file_path)
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/")
+async def root():
+    status = {
+        "message": "Autism Prediction API is running",
+        "video_models_loaded": video_model is not None and video_scaler is not None and video_label_encoder is not None,
+        "questionnaire_model_loaded": qs_model is not None
+    }
+    return status 
