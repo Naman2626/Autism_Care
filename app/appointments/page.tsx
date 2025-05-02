@@ -1,5 +1,10 @@
+"use client";
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "./firebaseConfig";
+import { useState } from "react";
 
 export default function AppointmentsPage() {
   const specialists = [

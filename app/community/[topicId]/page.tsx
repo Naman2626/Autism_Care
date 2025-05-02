@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { useState, useRef } from "react";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,7 +63,7 @@ export default function TopicChatPage() {
   const params = useParams();
   const topicId = params?.topicId as string;
   const topic = forumTopics.find((t) => t.id === topicId);
-  const [messages, setMessages] = useState(topic ? topic.messages : []);
+  const [messages, setMessages] = useState(topic ? [...topic.messages] : []);
   const [input, setInput] = useState("");
   const [author, setAuthor] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -72,9 +72,12 @@ export default function TopicChatPage() {
     if (!input.trim() || !author.trim()) return;
     setMessages((prev) => [...prev, { text: input, author }]);
     setInput("");
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 
-  if (!topic) return <div className="text-center py-10 text-gray-500">Topic not found.</div>;
+  if (!topic) {
+    return <div className="max-w-2xl mx-auto py-8">Topic not found.</div>;
+  }
 
   return (
     <div className="max-w-2xl mx-auto py-8">

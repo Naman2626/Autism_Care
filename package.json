@@ -20,11 +20,7 @@
     "axios": "^1.8.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-<<<<<<< HEAD
     "firebase": "^11.6.1",
-=======
-    "firebase": "^11.6.0",
->>>>>>> ad0866f90a9d9badd012d7cb9ff20fe1701c77ef
     "lucide-react": "^0.474.0",
     "next": "^14.2.23",
     "react": "^18.2.0",
